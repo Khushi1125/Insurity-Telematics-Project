@@ -46,3 +46,55 @@ This project demonstrates how telematics technology can be integrated into auto 
 ├── requirements.txt        # Python dependencies
 └── README.md              # This file
 ```
+
+
+
+## Modeling 
+```
+                ┌───────────────┐
+                │   Input Data  │
+                │  (X features) │
+                └───────┬───────┘
+                        │
+                        ▼
+            ┌─────────────────────────┐
+            │ Preprocessing Step      │
+            │ - OneHotEncode vehicle  │
+            │   type (for sklearn)    │
+            │ - Pass numeric features │
+            └─────────┬───────────────┘
+                      │
+                      ▼
+       ┌───────────────┬───────────────┬───────────────┐
+       │               │               │               │
+       ▼               ▼               ▼               ▼
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│ RandomForest│ │ XGBoost     │ │ Gradient    │ │ CatBoost    │
+│ Regressor   │ │ Regressor   │ │ Boosting    │ │ Regressor   │
+└──────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────┬──────┘
+       │               │               │               │
+       └───────────────┴───────────────┴───────────────┘
+                       │
+                       ▼
+          ┌─────────────────────────┐
+          │ Base Model Predictions  │
+          │ (predictions from RF,   │
+          │  XGBoost, GradientBoost,│
+          │  CatBoost)              │
+          └─────────┬───────────────┘
+                    │
+                    ▼
+          ┌─────────────────────────┐
+          │ Final Estimator: Ridge  │
+          │ Regression combines     │
+          │ base predictions        │
+          └─────────┬───────────────┘
+                    │
+                    ▼
+               ┌───────────────┐
+               │ Final Output  │
+               │ Predicted     │
+               │ enhanced_risk │
+               │ score (ŷ)     │
+               └───────────────┘
+```
