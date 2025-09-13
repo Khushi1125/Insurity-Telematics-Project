@@ -1,18 +1,8 @@
-# Insurity-Telematics-Project
-Telematics-based auto insurance prototype with simulated driving data, feature extraction, and risk scoring.
+# Telematics Risk Scoring and Premium Pricing
 
-## Project Overview
+This project builds a telematics-based risk scoring model and premium pricing system. It processes trip data (e.g., harsh braking, acceleration, speed, night trips, claims, and vehicle type) to generate a risk score (0–100) and estimate insurance premium costs. The results are visualized in interactive Streamlit dashboards.
 
-This project demonstrates how telematics technology can be integrated into auto insurance to enable usage-based insurance (UBI) models like Pay-As-You-Drive (PAYD) and Pay-How-You-Drive (PHYD), offering fairer and more personalized premium calculations.
-
-### Key Features
-
-- **Realistic Telematics Simulation**: Generates GPS, speed, acceleration, and braking data
-- **Comprehensive Feature Extraction**: Extracts 50+ driving behavior features
-- **Data Quality Validation**: Ensures data integrity and identifies issues
-- **Risk Scoring**: Calculates composite risk scores based on driving behavior
-- **Scalable Architecture**: Designed for production deployment
-
+---
 ## Architecture
 
 ```
@@ -29,204 +19,130 @@ This project demonstrates how telematics technology can be integrated into auto 
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
-## Project Structure
 
+## Setup Instructions
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Khushi1125/Insurity-Telematics-Project.git
+   cd Insurity-Telematics-Project
+   ```
+
+2. **Create and activate a virtual environment**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate   
+   venv\Scripts\activate     
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+---
+
+## Running the Dashboards
+
+1. Navigate into the dashboard folder:
+   ```bash
+   cd dashboard
+   ```
+
+2. Run the desired dashboard file:
+   ```bash
+   python3 -m streamlit run "file_name.py"
+   ```
+
+   Example:
+   ```bash
+   python3 -m streamlit run "Admin.py"
+   ```
+
+3. Open the provided local URL in your browser to interact with the dashboard.
+
+---
+
+## Evaluation Process
+
+# Combined model structure 
 ```
-├── src/                    # Source code
-│   ├── telematics_simulator.py    # Data simulation engine
-│   ├── feature_extraction.py      # Feature extraction pipeline
-│   └── data_validation.py         # Data quality validation
-├── models/                 # AI models and weights
-├── docs/                   # Documentation and research notes
-├── bin/                    # Executable scripts
-│   ├── run_sim.sh         # Run telematics simulation
-│   ├── extract_features.sh # Run feature extraction
-│   └── run_demo.sh        # Complete demo pipeline
-├── data/                   # Sample data and outputs
-├── requirements.txt        # Python dependencies
-└── README.md              # This file
+                ┌───────────────────────────┐
+                │       Raw Driver Data     │
+                │ Trips, miles, speed       │
+                │ Harsh events, night %     │
+                │ Vehicle type, claims      │
+                └───────────────┬───────────┘
+                                │
+                                ▼
+         ┌──────────────────────┴──────────────────────┐
+         │                                             │
+┌───────────────────────────┐             ┌───────────────────────────┐
+│     Data Preparation      │             │       Preprocessing       │
+│ - Select risk features    │             │ - Encode categories       │
+│ - Drop IDs                │             │ - Numeric passthrough     │
+│ - Target: risk score      │             │ - Prevent leakage         │
+└───────────────┬───────────┘             └───────────────┬───────────┘
+                │                                         │
+                └────────────────────┬────────────────────┘
+                                     ▼
+                         ┌───────────────────────────┐
+                         │         Modeling          │
+                         │ CatBoost, RF, XGB, GB     │
+                         │ Stacking Ensemble (final) │
+                         └───────────────┬───────────┘
+                                         │
+                   ┌─────────────────────┴─────────────────────┐
+                   │                                           │
+      ┌───────────────────────────┐               ┌───────────────────────────┐
+      │ Cross-Validation (5-fold) │               │   Hold-Out Test Results   │
+      │ MAE, RMSE, R²             │               │ R² ≈ 0.95 (Stacking best) │
+      │ Confirms generalization   │               │ Confirms reliability      │
+      └───────────────┬───────────┘               └───────────────┬───────────┘
+                      │                                           │
+                      └──────────────────────┬────────────────────┘
+                                             ▼
+                               ┌───────────────────────────┐
+                               │   Risk Score Prediction   │
+                               │ Numeric score → High/Low  │
+                               │ Links to premium pricing  │
+                               └───────────────┬───────────┘
+                                               │
+                                               ▼
+                               ┌───────────────────────────┐
+                               │   Premium Calculation     │
+                               │ Normalize → Scale (+50%)  │
+                               │ Annual = base * factor    │
+                               │ Monthly = annual / 12     │
+                               └───────────────┬───────────┘
+                                               │
+                                               ▼
+                               ┌───────────────────────────┐
+                               │          Outputs          │
+                               │ Risk score + premiums     │
+                               │ Business impact: fair,    │
+                               │ data-driven pricing       │
+                               └───────────────────────────┘
 ```
+
+# The project uses three main components:
+
+1. **Enhanced Risk Score Formula**
+   - Factors: harsh braking, harsh acceleration, speeding, night driving, claims history, and vehicle type.  
+   - Each factor is normalized to 0–1 and weighted according to its impact on accident likelihood.  
+   - Vehicle type adds fixed points, normalized to align with other features.  
+   - Final risk score is bounded between 0–100.
+
+2. **Claims Weighted Score**
+   - Accounts for past claims by type and severity.  
+   - Weighted more heavily than other features because claims history is the strongest predictor of future risk.
+
+3. **Premium Cost Formula**
+   - Base premium reflects current industry pricing.  
+   - Risk score acts as a multiplier to adjust premiums fairly.  
+   - Example: Safer drivers pay closer to the base, higher-risk drivers pay proportionally more.  
+
+Together, these formulas ensure a fair, data-driven pricing structure that balances safety incentives with actuarial soundness.
 
 
 
-## Risk Score Modeling 
-```
-                ┌───────────────┐
-                │   Input Data  │
-                │  (X features) │
-                └───────┬───────┘
-                        │
-                        ▼
-            ┌─────────────────────────┐
-            │ Preprocessing Step      │
-            │ - OneHotEncode vehicle  │
-            │   type (for sklearn)    │
-            │ - Pass numeric features │
-            └─────────┬───────────────┘
-                      │
-                      ▼
-       ┌───────────────┬───────────────┬───────────────┐
-       │               │               │               │
-       ▼               ▼               ▼               ▼
-┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-│ RandomForest│ │ XGBoost     │ │ Gradient    │ │ CatBoost    │
-│ Regressor   │ │ Regressor   │ │ Boosting    │ │ Regressor   │
-└──────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────┬──────┘
-       │               │               │               │
-       └───────────────┴───────────────┴───────────────┘
-                       │
-                       ▼
-          ┌─────────────────────────┐
-          │ Base Model Predictions  │
-          │ (predictions from RF,   │
-          │  XGBoost, GradientBoost,│
-          │  CatBoost)              │
-          └─────────┬───────────────┘
-                    │
-                    ▼
-          ┌─────────────────────────┐
-          │ Final Estimator: Ridge  │
-          │ Regression combines     │
-          │ base predictions        │
-          └─────────┬───────────────┘
-                    │
-                    ▼
-               ┌───────────────┐
-               │ Final Output  │
-               │ Predicted     │
-               │ enhanced_risk │
-               │ score (ŷ)     │
-               └───────────────┘
-```
-
-## Combined Model
-```
-┌───────────────────────────────┐
-│         Raw Driver Data       │
-│  - Trip counts                │
-│  - Average & total miles      │
-│  - Average speed              │
-│  - Harsh braking/acceleration │
-│  - Night driving %            │
-│  - Vehicle type & age         │
-│  - Prior claims / violations  │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│       Data Preparation        │
-│  - Feature selection          │
-│      * Keep behavior/risk vars│
-│      * Remove non-predictive  |
-│         IDs                   |
-│  - Target: enhanced_risk_score│
-│  - Identify categorical vs    │
-│    numeric                    │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│        Preprocessing          │
-│  - Convert categorical →      │
-│    numeric                    │
-│      * One-hot encoding (RF,  │
-│        XGB, GB)               │
-│      * CatBoost handles       │
-│        categories natively    │
-│  - Numeric features: passed   │
-│    as-is                      │
-│  - Aim:                       │
-│      avoid data leakage &     │
-│      ensure model interprets  │
-│      inputs correctly         │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│           Modeling            │
-│  - CatBoost                   │
-│  - RandomForest               │
-│  - XGBoost                    │
-│  - GradientBoosting (sklearn) │
-│  - Stacking Ensemble          │
-│      * Combines RF, XGB, GB   │
-│      * Linear model as final  │
-│        estimator              │
-│  - Goal:                      │
-│      reduce bias/variance &   │
-│      maximize predictive      │
-│      accuracy                 │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│ Cross-Validation & Evaluation │
-│  - 5-fold CV for robust       │
-│    performance                │
-│  - Metrics: MAE, RMSE, R²     │
-│  - Findings: Stacking Ensemble│
-│    best                       │
-│  - Ensures generalization &   │
-│    avoids overfitting         │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│   Hold-Out Test Evaluation    │
-│  - Train models on full train │
-│    set                        │
-│  - Evaluate on unseen test set│
-│  - Stacking Ensemble confirms │
-│    high performance(R² ~ 0.95)│
-│  - Validates reliability for  │
-│    real-world predictions     │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│       Risk Score Prediction   │
-│  - Output: enhanced_risk_score│
-│    (numeric)                  │
-│  - Interpretation:            │
-│      * High score → higher    │
-│        likelihood of claims   │
-│      * Low score → safer      │
-│        driver, lower premium  │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│     Premium Calculation       │
-│  1. Normalize risk:           │
-│      normalized_risk =        │
-│      predicted_risk_score /   │
-│      max_risk_score           │
-│  2. Scaling factor:           │
-│      scaling_factor = 1 +     │
-│      0.5 * normalized_risk    │
-│  3. Annual premium:           │
-│      premium_annual = base_   │
-│      premium * scaling_factor │
-│  4. Monthly premium:          │
-│      premium_monthly =        │
-│      premium_annual / 12      │
-│  - Base premium anchored in   │
-│    industry average           │
-│  - Ensures premiums           │
-│    proportional to ri         │
-└───────────────┬───────────────┘
-                │
-                ▼
-┌───────────────────────────────┐
-│           Outputs             │
-│  - Predicted risk score       │
-│  - Annual premium             │
-│  - Monthly premium            │
-│                               │
-│  Business Impact:             │
-│  - Fair, data-driven pricing  │
-│  - Rewards safe driving       │
-│  - Penalizes risky behavior   │
-│  - Transparent & interpretable│
-└───────────────────────────────┘
-```
