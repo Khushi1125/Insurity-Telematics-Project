@@ -1,15 +1,7 @@
--- ===========================
--- Telematics Insurance Schema
--- ===========================
-
--- Drop existing tables if rerunning
 DROP TABLE IF EXISTS telemetry;
 DROP TABLE IF EXISTS trips;
 DROP TABLE IF EXISTS drivers;
 
--- ---------------------------
--- Driver table
--- ---------------------------
 CREATE TABLE drivers (
     driver_id TEXT PRIMARY KEY,
     num_trips INTEGER,
@@ -36,9 +28,6 @@ CREATE TABLE drivers (
     claims_weighted_score REAL
 );
 
--- ---------------------------
--- Trips table
--- ---------------------------
 CREATE TABLE trips (
     trip_id TEXT PRIMARY KEY,
     driver_id TEXT,
@@ -55,9 +44,6 @@ CREATE TABLE trips (
     FOREIGN KEY (driver_id) REFERENCES drivers(driver_id)
 );
 
--- ---------------------------
--- Telemetry table
--- ---------------------------
 CREATE TABLE telemetry (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     timestamp TIMESTAMP,
